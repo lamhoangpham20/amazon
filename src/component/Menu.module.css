@@ -1,9 +1,15 @@
-.Menu{
+.Menu1{
   width: 400px;
   height: 300px;
-  float:left;
+    float:left;
   margin: 20px;
 }
 ul{
   list-style-type: none;
+}
+.Menu2{
+  width: 400px;
+  height: 300px;
+  float:none;
+  margin: 20px;
 }
