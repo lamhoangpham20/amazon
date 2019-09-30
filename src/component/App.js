@@ -1,43 +1,51 @@
 import React from "react"
 import Menu from "./Menu"
 import {BrowserRouter as Router, Route} from 'react-router-dom';
-import image1 from "./image1.jpg"
-import image2 from "./image2.jpg"
-import image3 from "./image3.jpg"
-import image4 from "./image4.jpg"
-import image5 from "./image5.jpg"
-import image6 from "./image6.jpg"
-import Search from "./Search"
 import Register from "./Register"
 import UserInfo from "./UserInfo"
 import ProductView from "./ProductView"
 import ShoppingCart from "./ShoppingCart"
-import {Link} from 'react-router-dom'
+import axios from 'axios';
 class App extends React.Component
 {
   constructor(props){
     super(props);
     this.state={
-      items:[
-        { id: 1, img: image1, name:"Roku Express | Easy High Definition (HD) Streaming Media Player", company:"Roku", price:26.00, star:5},
-        { id: 2, img: image2, name:"HP 63 | 2 Ink Cartridges | Black, Tri-color | F6U61AN, F6U62AN", company:"HP", price:45.89, star:4.5},
-        { id: 3, img: image3, name:"Samsung 128GB 100MB/s (U3) MicroSDXC Evo Select Memory Card with Adapter (MB-ME128GA/AM)", company:"Samsung", price:18.89, star:4},
-        { id: 4, img: image4, name:"HP OfficeJet 3830 All-in-One Wireless Printer, HP Instant Ink & Amazon Dash Replenishment ready (K7V40A)", company:"Samsung", price:18.89, star:4},
-        { id: 5, img: image5, name:"Acer Aspire 5 Slim Laptop, 15.6 Full HD IPS Display, AMD Ryzen 3 3200U, Vega 3 Graphics, 4GB DDR4, 128GB SSD, Backlit Keyboard, Windows 10 in S Mode, A515-43-R19L", company:"Acer", price:18.89, star:4},
-        { id: 6, img: image6, name:"Roku Streaming Stick+ | HD/4K/HDR Streaming Device with Long-range Wireless and Voice Remote with TV Power and Volume", company:"Roku", price:26.00, star:5},
-  ], textInput: "",
+      items:[],
+   textInput: "",
     listSylte:{},
     list:true,
     firstname:"",
     lastname:"",
     email:"",
     phoneNumber:"",
-   shoppingcart:[]}
+   shoppingcart:[],
+   total:0,
+ networkError: false}
+}
 
+componentDidMount = () =>
+  {
+    axios.get('http://localhost:4000/items').then(result => {
+      this.setState({ items: result.data.items });
+    })
+    .catch(error => {
+      console.error(error);
+      this.setState({ networkError: true })
+    })
+  }
+
+  count = (value) =>
+  {
+    let money = value;
+    this.setState({total:value});
   }
   getProductInfo = (productId) => {
       return this.state.items.find(item => item.id === productId);
     }
+  getCartInfo = (productId) => {
+        return this.state.items.find(item => item.id === productId);
+      }
   newInput = (event)=>{
    this.setState({textInput: event.target.value });
    console.log(event.target.value);
@@ -74,12 +82,72 @@ handleSubmit = (e) =>
 addCart = (value) =>
 {
   let shoppingcartCopy = [...this.state.shoppingcart];
-  if(shoppingcartCopy.indexOf(value) < 0)
+  if(shoppingcartCopy.length === 0)
   {
-  shoppingcartCopy.push(value);
+  let number = shoppingcartCopy.length;
+  let quantity = 1;
+  let id = value;
+  let cart = {number,id,quantity};
+  shoppingcartCopy.push(cart);
   this.setState({shoppingcart:shoppingcartCopy});
+  console.log(this.state.shoppingcart);
+  }
+  else if(shoppingcartCopy.every(i=>i.id != value) && shoppingcartCopy.length != 0)
+  {
+    console.log('ngu');
+  let number = shoppingcartCopy.length;
+  let quantity = 1;
+  let id = value;
+  let cart = {number,id,quantity};
+  shoppingcartCopy.push(cart);
+  this.setState({shoppingcart:shoppingcartCopy});
+  console.log(this.state.shoppingcart);
+  }
+  else if(shoppingcartCopy.some(i=>i.id === value) && shoppingcartCopy.length != 0)
+  {
+    console.log('qua');
+    let cartCopy = shoppingcartCopy.find(i=>i.id === value);
+    let filterCartCopy = shoppingcartCopy.filter(i=>i.id != value);
+    let quantity = cartCopy.quantity + 1;
+    let number = cartCopy.number;
+    let id = cartCopy.id;
+    let duplicateItem= {number,id,quantity};
+    console.log(duplicateItem);
+    console.log(filterCartCopy);
+    let stt = shoppingcartCopy.indexOf(cartCopy);
+    filterCartCopy.splice(stt,0,duplicateItem);
+    console.log(stt);
+    console.log(filterCartCopy)
+    this.setState({shoppingcart:filterCartCopy});
+  }
+  }
+
+deleteCart = (value) =>
+{
+  let shoppingcartCopy = [...this.state.shoppingcart];
+  let deleteCart = shoppingcartCopy.filter(i=>i.id != value)
+  this.setState({shoppingcart:deleteCart});
+  console.log(this.state.shoppingcart);
+
 }
+
+changeCart = (event) =>
+{
+   let number= parseInt(event.target.name);
+   let shoppingcartCopy = [...this.state.shoppingcart];
+   let quantity =  parseInt(event.target.value);
+   let id = shoppingcartCopy[number].id;
+   let cart = {number,id,quantity};
+   console.log(shoppingcartCopy)
+   let cartCopy = shoppingcartCopy.filter(i=>(i.number != number));
+   console.log(number);
+   cartCopy.splice(number,0,cart);
+   this.setState({shoppingcart:cartCopy});
+  console.log(this.state.shoppingcart);
 }
+
+
+
   render()
   {
     return(
@@ -98,8 +166,10 @@ addCart = (value) =>
 
 <Route path="/register" exact render={ routeProps => <Register handleSubmit={this.handleSubmit}
 handleChange={this.handleChange} {...routeProps} /> }/>
-<Route path="/product/:id" exact render={routeProps => <ProductView getProductInfo={this.getProductInfo} addCart={this.addCart}{...routeProps} /> }/>
-<Route path="/shoppingcart" exact render={routeProps => <ShoppingCart shoppingcart={this.state.shoppingcart} items={this.state.items}{...routeProps} /> }/>
+<Route path="/product/:id" exact render={routeProps => <ProductView shoppingcart={this.state.shoppingcart} getProductInfo={this.getProductInfo} addCart={this.addCart}{...routeProps} /> }/>
+<Route path="/shoppingcart" exact render={routeProps => <ShoppingCart total={this.state.total} shoppingcart={this.state.shoppingcart}
+count={this.count} item={this.state.items} getCartInfo={this.getCartInfo}
+changeCart={this.changeCart} deleteCart={this.deleteCart}{...routeProps}  /> }/>
 </Router>
 )
   }

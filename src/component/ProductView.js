@@ -2,8 +2,8 @@ import React from "react"
 import {Link} from "react-router-dom"
  export default function ProductView(props)
  {
+   console.log(props.shoppingcart);
    const data = props.location.state;
-   console.log(props);
    const productData = props.getProductInfo(parseInt(props.match.params.id));
    return(
      <div>
